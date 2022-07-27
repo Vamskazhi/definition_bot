@@ -1,16 +1,46 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
-
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+import re
+import os
+from config import settings
+from telebot import TeleBot
+from wikipedia import set_lang, page
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+# token = settings.token
+token = os.getenv('TOKEN')
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+bot = TeleBot(token)
+set_lang("ru")
+
+
+def getwiki(s):
+    try:
+        ny = page(s)
+        wikitext = ny.content[:1000]
+        wikimas = wikitext.split('.')
+        wikimas = wikimas[:-1]
+        wikitext2 = ''
+        for x in wikimas:
+            if not('==' in x):
+                if(len((x.strip()))>3):
+                   wikitext2=wikitext2+x+'.'
+            else:
+                break
+        wikitext2 = re.sub('\([^()]*\)', '', wikitext2)
+        wikitext2 = re.sub('\([^()]*\)', '', wikitext2)
+        wikitext2 = re.sub('\{[^\{\}]*\}', '', wikitext2)
+        return wikitext2
+    except Exception as e:
+        return 'В энциклопедии нет информации об этом'
+
+
+@bot.message_handler(commands=["start"])
+def start(m, res=False):
+    bot.send_message(m.chat.id, 'Отправьте мне любое слово, и я найду его значение на Wikipedia')
+
+
+@bot.message_handler(content_types=["text"])
+def handle_text(message):
+    bot.send_message(message.chat.id, getwiki(message.text))
+
+
+bot.polling(none_stop=True, interval=0)
