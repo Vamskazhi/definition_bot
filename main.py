@@ -5,14 +5,19 @@ from telebot import TeleBot
 from wikipedia import set_lang, page
 
 
-# token = settings.token
-token = os.getenv('TOKEN')
+def get_token():
+    try:
+        token = settings.token
+    except AttributeError as er:
+        token = os.getenv('TOKEN')
+    return token
 
-bot = TeleBot(token)
+
+bot = TeleBot(get_token())
 set_lang("ru")
 
 
-def getwiki(s):
+def get_wiki(s):
     try:
         ny = page(s)
         wikitext = ny.content[:1000]
@@ -40,7 +45,7 @@ def start(m, res=False):
 
 @bot.message_handler(content_types=["text"])
 def handle_text(message):
-    bot.send_message(message.chat.id, getwiki(message.text))
+    bot.send_message(message.chat.id, get_wiki(message.text))
 
 
 bot.polling(none_stop=True, interval=0)
